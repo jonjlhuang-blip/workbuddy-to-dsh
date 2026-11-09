@@ -115,7 +115,11 @@ if (-not $NodeExe) {
   ) | ForEach-Object { Write-Host $_ -ForegroundColor Red }
   exit 5
 }
-$major = [int]((& $NodeExe -p 'process.versions.node.split(".")[0]').Trim())
+# Parse the major version from `node -v` (e.g. v24.19.0). Do not pass a JS
+# one-liner containing double quotes: Windows PowerShell 5.1 strips the inner
+# quotes when it invokes a native exe, turning split(".") into split(.).
+$nodeVer = (& $NodeExe -v).Trim()
+$major = [int]($nodeVer -replace '^v','' -split '\.')[0]
 if ($major -lt 20) { Die "Node.js is too old: $(& $NodeExe -v). Need Node >= 20." 5 }
 $npm = Get-Command npm -ErrorAction SilentlyContinue
 if (-not $npm) { Die 'Found node but not npm. Please install the full Node.js distribution (npm included).' 5 }
